@@ -11,7 +11,7 @@
 	<Company></Company>
 	<Product>Leaf.$(AssemblyName)</Product>
 	<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-	<Version>1.1.0</Version>
+	<Version>1.1.1</Version>
 	<Description>CvLibrary的扩展功能库</Description>
 	<PackageOutputPath>nupkg</PackageOutputPath>
 	<PackageId>Leaf.$(AssemblyName)</PackageId>
@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Leaf.CvLibrary" Version="1.1.3" />
+    <PackageReference Include="Leaf.CvLibrary" Version="1.1.5" />
   </ItemGroup>
 
 </Project>
