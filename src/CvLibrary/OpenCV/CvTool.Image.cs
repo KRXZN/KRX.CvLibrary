@@ -146,10 +146,16 @@ namespace CvLibrary.OpenCV
             return new Mat(mat, rect1).Clone();
         }
 
-
-        public static Mat RotateImage(Mat mat, double angle)
+        /// <summary>
+        /// 旋转图像,支持任意角度旋转<br/>
+        /// 对于90度的整数倍旋转,使用OpenCV内置的旋转函数以保持图像质量<br/>
+        /// 对于其他角度,使用仿射变换进行旋转,并自动调整输出图像大小以避免裁剪<br/>
+        /// 默认<see href="顺时针"/>旋转,可以通过<see href="isClockwise"/>参数控制旋转方向.
+        /// </summary>
+        public static Mat RotateImage(Mat mat, double angle, bool isClockwise = true)
         {
             Mat rotated = new();
+            angle = ((angle % 360) + 360) % 360;
             if (angle == 90)
             {
                 Cv2.Rotate(mat, rotated, RotateFlags.Rotate90Clockwise);
@@ -162,67 +168,43 @@ namespace CvLibrary.OpenCV
             {
                 Cv2.Rotate(mat, rotated, RotateFlags.Rotate180);
             }
-            else if (angle == 0)
+            else if (Math.Abs(angle) < 1e-6)
             {
                 return mat.Clone();
             }
             else
             {
+                if (isClockwise)
+                {
+                    angle = -angle;
+                }
                 Point2f center = new(mat.Width / 2f, mat.Height / 2f);
-                Mat rotationMatrix = Cv2.GetRotationMatrix2D(center, angle, 1.0);
+                using Mat rotationMatrix = Cv2.GetRotationMatrix2D(center, angle, 1.0);
 
-                // Calculate the new bounding box size to prevent cropping
+                // 计算旋转后的包围盒大小
                 var bbox = new RotatedRect(center, mat.Size(), (float)angle).BoundingRect();
 
-                rotationMatrix.Set(0, 2, rotationMatrix.At<double>(0, 2) + bbox.Width / 2.0 - center.X);
-                rotationMatrix.Set(1, 2, rotationMatrix.At<double>(1, 2) + bbox.Height / 2.0 - center.Y);
-
-                Cv2.WarpAffine(mat, rotated, rotationMatrix, bbox.Size);
+                // 调整平移量，防止图像被裁剪
+                rotationMatrix.Set(
+                    0,
+                    2,
+                    rotationMatrix.At<double>(0, 2) + bbox.Width / 2.0 - center.X
+                );
+                rotationMatrix.Set(
+                    1,
+                    2,
+                    rotationMatrix.At<double>(1, 2) + bbox.Height / 2.0 - center.Y
+                );
+                Cv2.WarpAffine(
+                    mat,
+                    rotated,
+                    rotationMatrix,
+                    bbox.Size,
+                    InterpolationFlags.Cubic,
+                    BorderTypes.Constant,
+                    Scalar.All(128)
+                );
             }
-            return rotated;
-        }
-
-
-        /// <summary>
-        /// 旋转图像（统一使用 WarpAffine，所有角度走同一路径，保证包围盒尺寸连续性）。
-        /// 填充区域使用灰色（128），避免黑色边框造成的零方差问题。
-        /// </summary>
-        public static Mat RotateMat(Mat mat, double angle, bool isClockwise = true)
-        {
-            if (isClockwise)
-            {
-                angle = -angle;
-            }
-            // 归一化角度到 [0, 360)
-            angle = ((angle % 360) + 360) % 360;
-            if (Math.Abs(angle) < 1e-6)
-                return mat.Clone();
-
-            Point2f center = new(mat.Width / 2f, mat.Height / 2f);
-            using Mat rotationMatrix = Cv2.GetRotationMatrix2D(center, angle, 1.0);
-
-            // 计算旋转后的包围盒大小
-            var bbox = new RotatedRect(center, mat.Size(), (float)angle).BoundingRect();
-
-            // 调整平移量，防止图像被裁剪
-            rotationMatrix.Set(0, 2, rotationMatrix.At<double>(0, 2) + bbox.Width / 2.0 - center.X);
-            rotationMatrix.Set(
-                1,
-                2,
-                rotationMatrix.At<double>(1, 2) + bbox.Height / 2.0 - center.Y
-            );
-
-            Mat rotated = new();
-            Cv2.WarpAffine(
-                mat,
-                rotated,
-                rotationMatrix,
-                bbox.Size,
-                InterpolationFlags.Cubic,
-                BorderTypes.Constant,
-                Scalar.All(128)
-            );
-
             return rotated;
         }
 
@@ -260,7 +242,7 @@ namespace CvLibrary.OpenCV
         public static Mat RotateAndConcatenate(Mat mat, bool? vertical = null)
         {
             // 旋转180度
-            using Mat rotated = RotateMat(mat, 180);
+            using Mat rotated = RotateImage(mat, 180);
 
             // 如果未指定拼接方向,根据图像长宽比自动判断
             bool isVertical = vertical ?? DetermineOptimalConcatenation(mat);

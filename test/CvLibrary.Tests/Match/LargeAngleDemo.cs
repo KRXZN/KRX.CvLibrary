@@ -48,7 +48,7 @@ public class LargeAngleDemo
         foreach (double trueAngle in testAngles)
         {
             // 旋转整图
-            using var rotatedImage = CvTool.RotateMat(baseImage, trueAngle);
+            using var rotatedImage = CvTool.RotateImage(baseImage, trueAngle);
 
             // GT 位置
             double imgCX = baseImage.Width / 2.0, imgCY = baseImage.Height / 2.0;

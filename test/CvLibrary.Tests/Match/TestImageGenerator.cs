@@ -64,7 +64,7 @@ namespace CvLibrary.Tests.Match
         /// </summary>
         private static Mat RotateTemplate(Mat template, double angle)
         {
-            return CvLibrary.OpenCV.CvTool.RotateMat(template, angle);
+            return CvLibrary.OpenCV.CvTool.RotateImage(template, angle);
         }
 
         /// <summary>

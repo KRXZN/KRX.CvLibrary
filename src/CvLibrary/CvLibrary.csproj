@@ -13,7 +13,7 @@
 	<Company></Company>
 	<Product>Leaf.$(AssemblyName)</Product>
 	<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-	<Version>1.1.4</Version>
+	<Version>1.1.5</Version>
 	<Description>图像/计算机视觉通用库，基于OpenCV实现。</Description>
 	<PackageOutputPath>nupkg</PackageOutputPath>
 	<PackageId>Leaf.$(AssemblyName)</PackageId>
