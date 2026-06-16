@@ -4,7 +4,7 @@
 /// 颜色检测器的配置参数。
 /// <para>
 /// 操作员通常不需要修改这些参数，只需调整每种颜色定义中的
-/// <see cref="FuseColorDefinition.MaxDeltaE"/>（容差）即可。
+/// <see cref="ColorDefinition.MaxDeltaE"/>（容差）即可。
 /// 此处的参数仅供调试和特殊环境适配。
 /// </para>
 /// </summary>

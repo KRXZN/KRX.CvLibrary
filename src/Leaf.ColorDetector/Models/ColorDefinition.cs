@@ -1,4 +1,4 @@
-namespace Leaf.ColorDetector.Models;
+﻿namespace Leaf.ColorDetector.Models;
 
 /// <summary>
 /// 保险丝颜色定义。
@@ -11,13 +11,10 @@ namespace Leaf.ColorDetector.Models;
 /// Lab 参考色可通过 <see cref="Calibration.ColorCalibrator"/> 从样本图像自动学习获得。
 /// </para>
 /// </summary>
-public class FuseColorDefinition
+public class ColorDefinition
 {
     /// <summary>颜色名称（如 "Red", "Blue", "Yellow"）</summary>
     public string ColorName { get; set; } = string.Empty;
-
-    /// <summary>对应的额定电流（安培），仅用于参考显示</summary>
-    public string RatingLabel { get; set; } = string.Empty;
 
     /// <summary>Lab 参考色 — L* 明度分量 (0~100)</summary>
     public double RefL { get; set; }
@@ -32,10 +29,10 @@ public class FuseColorDefinition
     /// 最大允许色差（ΔE2000）。
     /// <para>
     /// 这是操作员唯一需要调整的参数。
-    /// 参考值：5=严格匹配，12=常规工业检测（默认），20=宽松容差。
+    /// 参考值：5=严格匹配，12=常规工业检测，20=宽松容差。
     /// </para>
     /// </summary>
-    public double MaxDeltaE { get; set; } = 12.0;
+    public double MaxDeltaE { get; set; } = 5;
 
     /// <summary>
     /// 亮度方向的自适应容差（L* 轴，0 表示自动回退到 MaxDeltaE 推导）。

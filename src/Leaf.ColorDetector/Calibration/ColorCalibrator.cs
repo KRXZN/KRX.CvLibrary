@@ -37,7 +37,7 @@ public static class ColorCalibrator
     /// <param name="maxDeltaE">容差，默认 12；设为 0 时完全由散布度自动推算</param>
     /// <param name="options">预处理选项，为 null 时使用默认值</param>
     /// <returns>校准得到的颜色定义</returns>
-    public static FuseColorDefinition LearnFromRoi(
+    public static ColorDefinition LearnFromRoi(
         Mat roiBgr,
         string colorName,
         string ratingLabel = "",
@@ -67,10 +67,9 @@ public static class ColorCalibrator
             var singleLightnessTol = Math.Clamp(effectiveMaxDeltaE * 1.2, 3.0, 15.0);
             var singleChromaTol = Math.Clamp(effectiveMaxDeltaE * 0.6, 4, 10.0);
 
-            return new FuseColorDefinition
+            return new ColorDefinition
             {
                 ColorName = colorName,
-                RatingLabel = ratingLabel,
                 RefL = Math.Round(labResult.L, 2),
                 RefA = Math.Round(labResult.A, 2),
                 RefB = Math.Round(labResult.B, 2),
@@ -97,7 +96,7 @@ public static class ColorCalibrator
     /// <param name="ratingLabel">额定标签，可选</param>
     /// <param name="options">预处理选项，为 null 时使用默认值</param>
     /// <returns>合并后的颜色定义（含自动建议的容差）</returns>
-    public static FuseColorDefinition LearnFromMultipleRois(
+    public static ColorDefinition LearnFromMultipleRois(
         IReadOnlyList<Mat> roiImages,
         string colorName,
         string ratingLabel = "",
@@ -160,10 +159,9 @@ public static class ColorCalibrator
         var lightnessTol = Math.Clamp(Math.Max(3.0 * lStd + 2.0, suggestedDeltaE * 0.7), 4.0, 20.0);
         var chromaTol = Math.Clamp(Math.Max(3.0 * cStd + 3.0, suggestedDeltaE * 0.9), 6.0, 25.0);
 
-        return new FuseColorDefinition
+        return new ColorDefinition
         {
             ColorName = colorName,
-            RatingLabel = ratingLabel,
             RefL = Math.Round(avgL, 2),
             RefA = Math.Round(avgA, 2),
             RefB = Math.Round(avgB, 2),
@@ -183,12 +181,12 @@ public static class ColorCalibrator
     /// <param name="colorRois">颜色名称 → ROI 区域的映射</param>
     /// <param name="options">预处理选项，为 null 时使用默认值</param>
     /// <returns>校准得到的颜色定义列表</returns>
-    public static List<FuseColorDefinition> LearnBatch(
+    public static List<ColorDefinition> LearnBatch(
         Mat imageMat,
         Dictionary<string, List<CvRect>> colorRois,
         ColorDetectorOptions? options = null)
     {
-        var results = new List<FuseColorDefinition>(colorRois.Count);
+        var results = new List<ColorDefinition>(colorRois.Count);
 
         foreach (var (colorName, rois) in colorRois)
         {

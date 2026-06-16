@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using CvCommon;
 using CvLibrary.OpenCV;
 using Leaf.ColorDetector.ColorScience;
@@ -10,7 +10,7 @@ using OpenCvSharp;
 namespace Leaf.ColorDetector.Detectors;
 
 /// <summary>
-/// 汽车保险丝颜色检测器。
+/// 颜色检测器。
 /// <para>
 /// 检测流程：
 /// 1. ROI 裁剪 → 中心区域采样
@@ -23,14 +23,14 @@ namespace Leaf.ColorDetector.Detectors;
 /// 8. 输出最佳匹配及诊断信息
 /// </para>
 /// </summary>
-public class FuseColorDetector : IFuseColorDetector
+public class ColorDetector : IColorDetector
 {
     private readonly ColorDetectorOptions _options;
-    private readonly ILogger<FuseColorDetector>? _logger;
+    private readonly ILogger<ColorDetector>? _logger;
 
-    public FuseColorDetector(
+    public ColorDetector(
         ColorDetectorOptions? options = null,
-        ILogger<FuseColorDetector>? logger = null)
+        ILogger<ColorDetector>? logger = null)
     {
         _options = options ?? new ColorDetectorOptions();
         _logger = logger;
@@ -41,7 +41,7 @@ public class FuseColorDetector : IFuseColorDetector
         Mat imageMat,
         CvRect roi,
         string expectedColor,
-        IReadOnlyList<FuseColorDefinition> colorDefinitions)
+        IReadOnlyList<ColorDefinition> colorDefinitions)
     {
         using var roiMat = CvTool.CropImage(imageMat, roi);
         return Detect(roiMat, expectedColor, colorDefinitions);
@@ -51,7 +51,7 @@ public class FuseColorDetector : IFuseColorDetector
     public ColorDetectResult Detect(
         Mat roiMat,
         string expectedColor,
-        IReadOnlyList<FuseColorDefinition> colorDefinitions)
+        IReadOnlyList<ColorDefinition> colorDefinitions)
     {
         var timestamp = Stopwatch.GetTimestamp();
         var totalPixels = roiMat.Rows * roiMat.Cols;
@@ -105,7 +105,7 @@ public class FuseColorDetector : IFuseColorDetector
     /// </summary>
     private List<ColorScore> ComputeMatchScores(
         LabStatistics.LabResult lab,
-        IReadOnlyList<FuseColorDefinition> definitions)
+        IReadOnlyList<ColorDefinition> definitions)
     {
         var scores = new List<ColorScore>(definitions.Count);
 
@@ -207,7 +207,7 @@ public class FuseColorDetector : IFuseColorDetector
     /// 返回值≈1 表示达到容差边界。
     /// </summary>
     private static double ComputeAdaptiveDistance(
-        FuseColorDefinition colorDef,
+        ColorDefinition colorDef,
         double measuredL,
         double measuredA,
         double measuredB)

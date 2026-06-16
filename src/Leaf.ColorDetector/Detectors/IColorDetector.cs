@@ -5,9 +5,9 @@ using OpenCvSharp;
 namespace Leaf.ColorDetector.Detectors;
 
 /// <summary>
-/// 保险丝颜色检测器接口。
+/// 颜色检测器接口。
 /// </summary>
-public interface IFuseColorDetector
+public interface IColorDetector
 {
     /// <summary>
     /// 对指定的 ROI 区域进行颜色检测。
@@ -21,7 +21,7 @@ public interface IFuseColorDetector
         Mat imageMat,
         CvRect roi,
         string expectedColor,
-        IReadOnlyList<FuseColorDefinition> colorDefinitions);
+        IReadOnlyList<ColorDefinition> colorDefinitions);
 
     /// <summary>
     /// 对已裁剪的 ROI 图像直接进行颜色检测。
@@ -33,5 +33,5 @@ public interface IFuseColorDetector
     ColorDetectResult Detect(
         Mat roiMat,
         string expectedColor,
-        IReadOnlyList<FuseColorDefinition> colorDefinitions);
+        IReadOnlyList<ColorDefinition> colorDefinitions);
 }
