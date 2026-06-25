@@ -1,4 +1,4 @@
-namespace Leaf.ColorDetector.Models;
+﻿namespace Leaf.ColorDetector.Models;
 
 /// <summary>
 /// 单个颜色检测的结果。
@@ -62,7 +62,6 @@ public class ColorDetectResult
     {
         DetectQuality.Insufficient => $"NG: 有效像素不足 ({ValidPixelCount})",
         DetectQuality.Unknown => $"NG: 未知颜色 (Lab={MeasuredL:F1},{MeasuredA:F1},{MeasuredB:F1})",
-        DetectQuality.SpatialInconsistent => $"NG: 空间不一致 {DetectedColor} ΔE={DeltaE:F1} Disp={Dispersion:F1}",
         DetectQuality.Ambiguous => $"NG: 颜色模糊 {DetectedColor} ΔE={DeltaE:F1}",
         _ when IsMatch => $"OK: {DetectedColor} ΔE={DeltaE:F1} [{Quality}]",
         _ => $"NG: 期望={ExpectedColor}, 检测={DetectedColor} ΔE={DeltaE:F1}"

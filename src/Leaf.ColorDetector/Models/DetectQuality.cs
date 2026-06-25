@@ -1,4 +1,4 @@
-namespace Leaf.ColorDetector.Models;
+﻿namespace Leaf.ColorDetector.Models;
 
 /// <summary>
 /// 颜色检测结果的质量等级。
@@ -13,9 +13,6 @@ public enum DetectQuality
 
     /// <summary>有效像素比例偏低（可能遮挡/半插入），结果可信度降低</summary>
     LowPixelRatio,
-
-    /// <summary>ROI 内颜色空间分布不均匀（半插入/倾斜/背景混入），结果不可靠</summary>
-    SpatialInconsistent,
 
     /// <summary>第1名与第2名得分过于接近，无法可靠区分</summary>
     Ambiguous,

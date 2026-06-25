@@ -147,10 +147,6 @@ public class ColorDetector : IColorDetector
         if (validRatio < _options.MinValidPixelRatio)
             return DetectQuality.LowPixelRatio;
 
-        // 空间一致性检查：ROI 内颜色分布不均匀
-        if (!isSpatiallyConsistent)
-            return DetectQuality.SpatialInconsistent;
-
         // 所有颜色得分都为 0（ΔE 全部超出容差）
         if (scores.Count == 0 || scores[0].Score <= 0)
             return DetectQuality.Unknown;
