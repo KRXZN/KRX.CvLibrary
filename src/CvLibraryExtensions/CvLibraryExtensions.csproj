@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Leaf.CvLibrary" Version="1.1.5" />
+    <ProjectReference Include="..\CvLibrary\CvLibrary.csproj" />
   </ItemGroup>
 
 </Project>
