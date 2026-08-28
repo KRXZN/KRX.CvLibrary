@@ -17,11 +17,13 @@ namespace CvLibrary.OpenCV.Match
         /// </summary>
         /// <param name="template">模板图像（任意通道，自动转灰度）。</param>
         /// <param name="options">创建参数。</param>
+        /// <param name="templateMask">模板掩码（CV_8UC1，与模板同尺寸；白色参与匹配，黑色忽略）。null = 全白（模板矩形内全有效）。</param>
         /// <returns>NCC 匹配模型。</returns>
-        public static CvNccModel Create(Mat template, NccModelOptions? options = null)
+        public static CvNccModel Create(Mat template, NccModelOptions? options = null, Mat? templateMask = null)
         {
             options ??= new NccModelOptions();
             ValidateTemplate(template);
+            ValidateTemplateMask(template, templateMask);
 
             // 自动转灰度
             Mat grayTemplate;
@@ -50,7 +52,7 @@ namespace CvLibrary.OpenCV.Match
             try
             {
                 var model = new CvNccModel();
-                model.Initialize(grayTemplate, options);
+                model.Initialize(grayTemplate, options, templateMask);
                 return model;
             }
             finally
@@ -82,7 +84,7 @@ namespace CvLibrary.OpenCV.Match
 
         private CvNccModel() { }
 
-        private void Initialize(Mat grayTemplate, NccModelOptions options)
+        private void Initialize(Mat grayTemplate, NccModelOptions options, Mat? templateMask)
         {
             TemplateSize = new CvSize(grayTemplate.Width, grayTemplate.Height);
             TemplateCenter = new Point2d(grayTemplate.Width / 2.0, grayTemplate.Height / 2.0);
@@ -97,8 +99,10 @@ namespace CvLibrary.OpenCV.Match
             NumLevels = options.NumLevels
                 ?? CalculateAutoLevels(TemplateSize.Width, TemplateSize.Height);
 
-            // 生成全白 mask（模板矩形内全有效）
-            var fullMask = new Mat(grayTemplate.Size(), MatType.CV_8UC1, Scalar.White);
+            // mask：外部传入则克隆使用（白色参与匹配，黑色忽略），否则全白（模板矩形内全有效）
+            var fullMask = templateMask != null
+                ? templateMask.Clone()
+                : new Mat(grayTemplate.Size(), MatType.CV_8UC1, Scalar.White);
 
             // 逐层构建预旋转模板
             var currentLevelTemplate = grayTemplate.Clone();
@@ -695,6 +699,27 @@ namespace CvLibrary.OpenCV.Match
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// 校验模板掩码：null 合法（等价全白）；非 null 时必须非空、CV_8UC1、与模板同尺寸。
+        /// </summary>
+        private static void ValidateTemplateMask(Mat template, Mat? templateMask)
+        {
+            if (templateMask is null)
+                return;
+
+            if (templateMask.Empty())
+                throw new ArgumentException("Template mask is empty.");
+
+            if (templateMask.Type() != MatType.CV_8UC1)
+                throw new ArgumentException(
+                    $"Template mask must be CV_8UC1, got {templateMask.Type()}.");
+
+            if (templateMask.Width != template.Width || templateMask.Height != template.Height)
+                throw new ArgumentException(
+                    $"Template mask size ({templateMask.Width}×{templateMask.Height}) "
+                    + $"must match template ({template.Width}×{template.Height}).");
+        }
 
         /// <summary>
         /// In-place sanitization: replaces NaN, +Inf, and -Inf with 0.

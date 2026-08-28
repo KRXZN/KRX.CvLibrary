@@ -242,6 +242,72 @@ namespace CvLibrary.Tests.Match
         }
 
         [Fact]
+        public void Create_WithMask_MaskedRegionChange_ShouldNotAffectMatch()
+        {
+            // 模板：不对称图案
+            using var template = CreateTestTemplate(60);
+
+            // 掩码：中央挖洞（黑色 = 不参与匹配），洞覆盖模板的黑点标记
+            var hole = new Rect(20, 20, 20, 20);
+            using var mask = new Mat(template.Size(), MatType.CV_8UC1, Scalar.White);
+            Cv2.Rectangle(mask, hole, Scalar.Black, -1);
+
+            var options = new NccModelOptions { AngleExtent = 0, NumLevels = 1 };
+            using var model = CvNccModel.Create(template, options, mask);
+
+            // 变体：洞区内容改为棋盘图案（模拟字符变化），洞外像素不变
+            using var variant = template.Clone();
+            for (int yy = 0; yy < hole.Height; yy += 4)
+            {
+                for (int xx = 0; xx < hole.Width; xx += 4)
+                {
+                    Cv2.Rectangle(variant,
+                        new Rect(hole.X + xx, hole.Y + yy, 2, 2),
+                        ((xx + yy) / 4) % 2 == 0 ? Scalar.Black : Scalar.White, -1);
+                }
+            }
+
+            double expectedX = 150;
+            double expectedY = 180;
+            using var searchImage = TestImageGenerator.CreateSearchImage(
+                300, 300, variant, expectedX, expectedY, angle: 0);
+
+            var results = model.FindMatches(searchImage, new FindMatchesOptions
+            {
+                MinScore = 0.8,
+                MaxMatches = 1,
+            });
+
+            Assert.Single(results);
+            // 洞外像素完全一致，带掩码的分数应接近 1
+            Assert.True(results[0].Score >= 0.95,
+                $"Masked match score too low: {results[0].Score}");
+            Assert.True(Math.Abs(results[0].Position.X - expectedX) < 1.5,
+                $"Expected X≈{expectedX}, got {results[0].Position.X}");
+            Assert.True(Math.Abs(results[0].Position.Y - expectedY) < 1.5,
+                $"Expected Y≈{expectedY}, got {results[0].Position.Y}");
+        }
+
+        [Fact]
+        public void Create_InvalidMask_ShouldThrowArgumentException()
+        {
+            using var template = CreateTestTemplate(50);
+            var options = new NccModelOptions { AngleExtent = 0 };
+
+            // 尺寸不符
+            using var wrongSize = new Mat(40, 40, MatType.CV_8UC1, Scalar.White);
+            Assert.Throws<ArgumentException>(() => CvNccModel.Create(template, options, wrongSize));
+
+            // 类型不符（应为 CV_8UC1）
+            using var wrongType = new Mat(50, 50, MatType.CV_8UC3, Scalar.White);
+            Assert.Throws<ArgumentException>(() => CvNccModel.Create(template, options, wrongType));
+
+            // 空 Mat
+            using var empty = new Mat();
+            Assert.Throws<ArgumentException>(() => CvNccModel.Create(template, options, empty));
+        }
+
+        [Fact]
         public void Dispose_DisposedModel_FindMatchesShouldThrow()
         {
             using var template = CreateTestTemplate(30);

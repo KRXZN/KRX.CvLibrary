@@ -208,6 +208,132 @@ namespace CvLibrary.OpenCV
             return rotated;
         }
 
+        /// <summary>
+        /// 将 <see cref="RotateImage(Mat, double, bool)"/>（默认顺时针）旋转后坐标系中的矩形，
+        /// 映射回源图坐标系的轴向包围矩形。<br/>
+        /// 90° 整数倍为精确映射；任意角度为角点逆映射后的包围盒（略大于真实区域）。
+        /// </summary>
+        /// <param name="rotatedRect">旋转后坐标系中的矩形。</param>
+        /// <param name="angle">旋转角度（度），与调用 RotateImage 时一致。</param>
+        /// <param name="sourceWidth">源图宽度。</param>
+        /// <param name="sourceHeight">源图高度。</param>
+        public static CvRect MapRotatedRectToSource(
+            CvRect rotatedRect,
+            double angle,
+            int sourceWidth,
+            int sourceHeight
+        )
+        {
+            angle = ((angle % 360) + 360) % 360;
+            double w = sourceWidth;
+            double h = sourceHeight;
+
+            // 角点逆映射（旋转后坐标系 -> 源图坐标系）
+            (double X, double Y) Inverse(double xr, double yr)
+            {
+                if (angle == 90)
+                    return (yr, h - xr);
+                if (angle == 180)
+                    return (w - xr, h - yr);
+                if (angle == 270)
+                    return (w - yr, xr);
+                if (angle < 1e-6)
+                    return (xr, yr);
+
+                // 任意角度：按 RotateImage 的仿射构造求逆
+                // 正向: dst = R(a)·(src - center) + (bbox.W/2, bbox.H/2)，a = -angle（顺时针）
+                double rad = -angle * Math.PI / 180.0;
+                double cos = Math.Cos(rad);
+                double sin = Math.Sin(rad);
+                double cx = w / 2.0;
+                double cy = h / 2.0;
+                var bbox = new RotatedRect(
+                    new Point2f((float)cx, (float)cy),
+                    new Size(sourceWidth, sourceHeight),
+                    (float)-angle
+                ).BoundingRect();
+                double dx = xr - bbox.Width / 2.0;
+                double dy = yr - bbox.Height / 2.0;
+                return (cx + cos * dx - sin * dy, cy + sin * dx + cos * dy);
+            }
+
+            var corners = new (double X, double Y)[]
+            {
+                Inverse(rotatedRect.X, rotatedRect.Y),
+                Inverse(rotatedRect.Right, rotatedRect.Y),
+                Inverse(rotatedRect.X, rotatedRect.Bottom),
+                Inverse(rotatedRect.Right, rotatedRect.Bottom),
+            };
+            double minX = corners.Min(c => c.X);
+            double minY = corners.Min(c => c.Y);
+            double maxX = corners.Max(c => c.X);
+            double maxY = corners.Max(c => c.Y);
+            return new CvRect(minX, minY, maxX - minX, maxY - minY);
+        }
+
+        /// <summary>
+        /// 将 <see cref="MapRotatedRectToSource"/> 的逆映射：源图坐标系中的矩形映射到
+        /// RotateImage（默认顺时针）旋转后坐标系中的轴向包围矩形。<br/>
+        /// 90° 整数倍为精确映射；任意角度为角点正向映射后的包围盒（略大于真实区域）。
+        /// </summary>
+        /// <param name="sourceRect">源图坐标系中的矩形。</param>
+        /// <param name="angle">旋转角度（度），与调用 RotateImage 时一致。</param>
+        /// <param name="sourceWidth">源图宽度。</param>
+        /// <param name="sourceHeight">源图高度。</param>
+        public static CvRect MapSourceRectToRotated(
+            CvRect sourceRect,
+            double angle,
+            int sourceWidth,
+            int sourceHeight
+        )
+        {
+            angle = ((angle % 360) + 360) % 360;
+            double w = sourceWidth;
+            double h = sourceHeight;
+
+            // 角点正向映射（源图坐标系 -> 旋转后坐标系）
+            (double X, double Y) Forward(double x, double y)
+            {
+                if (angle == 90)
+                    return (h - y, x);
+                if (angle == 180)
+                    return (w - x, h - y);
+                if (angle == 270)
+                    return (y, w - x);
+                if (angle < 1e-6)
+                    return (x, y);
+
+                // 任意角度：按 RotateImage 的仿射构造正向求值
+                // 正向: dst = R(a)·(src - center) + (bbox.W/2, bbox.H/2)，a = -angle（顺时针）
+                double rad = -angle * Math.PI / 180.0;
+                double cos = Math.Cos(rad);
+                double sin = Math.Sin(rad);
+                double cx = w / 2.0;
+                double cy = h / 2.0;
+                var bbox = new RotatedRect(
+                    new Point2f((float)cx, (float)cy),
+                    new Size(sourceWidth, sourceHeight),
+                    (float)-angle
+                ).BoundingRect();
+                double dx = x - cx;
+                double dy = y - cy;
+                return (bbox.Width / 2.0 + cos * dx + sin * dy, bbox.Height / 2.0 - sin * dx + cos * dy);
+            }
+
+            var corners = new (double X, double Y)[]
+            {
+                Forward(sourceRect.X, sourceRect.Y),
+                Forward(sourceRect.Right, sourceRect.Y),
+                Forward(sourceRect.X, sourceRect.Bottom),
+                Forward(sourceRect.Right, sourceRect.Bottom),
+            };
+            double minX = corners.Min(c => c.X);
+            double minY = corners.Min(c => c.Y);
+            double maxX = corners.Max(c => c.X);
+            double maxY = corners.Max(c => c.Y);
+            return new CvRect(minX, minY, maxX - minX, maxY - minY);
+        }
+
         public static Mat MultiImage(Mat mat1, Mat mat2, double factor = 0.005)
         {
             var multiMat = new Mat();
