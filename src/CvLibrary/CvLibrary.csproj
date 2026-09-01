@@ -32,8 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Leaf.CvCommon" Version="1.0.6" />
     <PackageReference Include="OpenCvSharp4.Windows" Version="4.11.0.20250507" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CvCommon\CvCommon.csproj" />
   </ItemGroup>
 
 </Project>
