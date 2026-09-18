@@ -14,7 +14,8 @@ namespace CvLibrary.OpenCV
      
         public static CvRegion SelecteMaxAreaRegion(CvRegion region)
         {
-            var maxAreaProps = region.RegionProperties.MaxBy(p => p.Area);
+            // net472 迁移：无 Enumerable.MaxBy，改用 OrderByDescending 取最大
+            var maxAreaProps = region.RegionProperties.OrderByDescending(p => p.Area).FirstOrDefault();
             Mat selected = new Mat();
             Cv2.Compare(region.Mask, maxAreaProps!.Label, selected, CmpType.EQ);
             region.Mask.MinMaxLoc(out double min, out double max);

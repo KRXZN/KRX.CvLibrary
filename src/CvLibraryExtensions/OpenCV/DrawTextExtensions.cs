@@ -11,7 +11,7 @@ namespace CvLibraryExtensions.OpenCV
     {
         public static void DrawWatermark(this Mat image, string context)
         {
-            ArgumentNullException.ThrowIfNull(image, nameof(image));
+            if (image is null) throw new ArgumentNullException(nameof(image));
 
             if (image.Empty())
             {

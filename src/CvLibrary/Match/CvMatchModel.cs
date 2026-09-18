@@ -231,7 +231,7 @@ namespace CvLibrary.OpenCV.Match
         protected static int CalculateAutoLevels(double templateWidth, double templateHeight)
         {
             double minSide = Math.Min(templateWidth, templateHeight);
-            int levels = (int)Math.Floor(Math.Log2(minSide / 25.0));
+            int levels = (int)Math.Floor(Math.Log(minSide / 25.0, 2.0));
             levels = Math.Max(1, levels);
 
             // 确保最顶层（旋转膨胀后）≥ 35px — 留足余量给大角度旋转。
@@ -308,8 +308,8 @@ namespace CvLibrary.OpenCV.Match
             double dx = Math.Abs(denomX) > 1e-10 ? (h0 - h2) / (2 * denomX) : 0;
 
             // 限制偏移量在合理范围 [-1, 1]
-            dx = Math.Clamp(dx, -1, 1);
-            dy = Math.Clamp(dy, -1, 1);
+            dx = Math.Max(-1, Math.Min(dx, 1));
+            dy = Math.Max(-1, Math.Min(dy, 1));
 
             return new Point2d(x + dx, y + dy);
         }
@@ -424,7 +424,7 @@ namespace CvLibrary.OpenCV.Match
         protected double NormalizeScore(float rawNcc)
         {
             // NaN/Infinity can arise from MatchTemplate on zero-variance regions (e.g., black borders).
-            if (!float.IsFinite(rawNcc))
+            if (float.IsNaN(rawNcc) || float.IsInfinity(rawNcc))
                 return 0.0;
 
             double value = ModelMetric == MatchMetric.IgnoreGlobalPolarity
@@ -466,7 +466,9 @@ namespace CvLibrary.OpenCV.Match
         /// </summary>
         protected void ValidateFindMatches(Mat searchImage, FindMatchesOptions options)
         {
-            ObjectDisposedException.ThrowIf(Disposed, this);
+            // net472 迁移：ObjectDisposedException 无 ThrowIf
+            if (Disposed)
+                throw new ObjectDisposedException(GetType().Name);
 
             if (searchImage == null || searchImage.Empty())
                 throw new ArgumentException("Search image is null or empty.");
